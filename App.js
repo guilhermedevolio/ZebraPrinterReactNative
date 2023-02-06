@@ -1,11 +1,12 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { Alert, NativeEventEmitter, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, NativeEventEmitter, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { NativeModules } from 'react-native';
 const { ZEBRA } = NativeModules;
 
 export default function App() {
   const [isPrinting, setPrinting] = useState(false);
+  const [currentMessage, setCurrentMessage] = useState(false);
   const [zebraConnected, setZebraConnected] = useState(false);
   
   useEffect(() => {
@@ -29,7 +30,7 @@ export default function App() {
 
 
   async function printTestFile() {
-
+    setPrinting(true);
 
     try {
       const print = await ZEBRA.printZPL(`
@@ -76,8 +77,10 @@ export default function App() {
       ^XZ
       `);
 
+      setPrinting(false);
       Alert.alert("OK", "ZPL Printed Successfully!");
     } catch (e) {
+      setPrinting(false);
       Alert.alert("ERROR", e.message);
     }
 
@@ -88,8 +91,24 @@ export default function App() {
       <Text> Status: {zebraConnected ? <Text style={styles.textStatusSuccess}> Conectado </Text> : <Text style={styles.textStatusError}> Desconectado </Text>} </Text>
       <TouchableOpacity  style={styles.button} onPress={printTestFile}>
         <Text style={{ color: 'white', textAlign: 'center' }}>Print Test File!</Text>
-      </TouchableOpacity>zz
+      </TouchableOpacity>
       <StatusBar style="auto" />
+
+      {isPrinting && (
+        <View style={styles.loading}>
+          <View style={{
+            backgroundColor: 'black',
+            padding: 20,
+            width: '100%',
+          }}>
+            <ActivityIndicator size='large' />
+            {currentMessage && (
+            <Text style={{ color: 'white', textAlign: 'center' }}>{currentMessage}</Text>
+            )}
+          </View>
+      </View>
+      )}
+      
     </View>
   );
 }
@@ -113,5 +132,15 @@ const styles = StyleSheet.create({
   },
   textStatusError: {
     color: 'red'
+  },
+  loading: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20
   }
 });
